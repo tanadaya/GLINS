@@ -1,0 +1,33 @@
+S DERASE1,DERASE1,#h("derase.f90",3)
+ V I,i,Integer,int,,0,#t("derase.f90",7)
+ V A,a,Integer,int,d,0,#t("derase.f90",7)
+ V X,x,Real(Kind=2),double,d,1,i(1:*),#t("derase.f90",8)
+ES
+S DERASE2,DERASE2,#h("derase.f90",18)
+ V I,i,Integer,int,,0,#t("derase.f90",22)
+ V J,j,Integer,int,,0,#t("derase.f90",22)
+ V A,a,Integer,int,d,0,#t("derase.f90",22)
+ V X,x,Real(Kind=2),double,d,2,i(1:*,1:*),#t("derase.f90",23)
+ V B,b,Integer,int,d,0,#t("derase.f90",22)
+ES
+S DERASE3,DERASE3,#h("derase.f90",35)
+ V I,i,Integer,int,,0,#t("derase.f90",39)
+ V J,j,Integer,int,,0,#t("derase.f90",39)
+ V A,a,Integer,int,d,0,#t("derase.f90",39)
+ V X,x,Real(Kind=2),double,d,3,i(1:*,1:*,1:*),#t("derase.f90",40)
+ V B,b,Integer,int,d,0,#t("derase.f90",39)
+ V C,c,Integer,int,d,0,#t("derase.f90",39)
+ V K,k,Integer,int,,0,#t("derase.f90",39)
+ES
+S DERASE1N,DERASE1N,#h("derase.f90",54)
+ V I,i,Integer,int,,0,#t("derase.f90",58)
+ V A,a,Integer,int,d,0,#t("derase.f90",58)
+ V X,x,Integer,int,d,1,i(1:*),#t("derase.f90",58)
+ES
+S DERASE2N,DERASE2N,#h("derase.f90",68)
+ V I,i,Integer,int,,0,#t("derase.f90",72)
+ V J,j,Integer,int,,0,#t("derase.f90",72)
+ V A,a,Integer,int,d,0,#t("derase.f90",72)
+ V X,x,Integer,int,d,2,i(1:*,1:*),#t("derase.f90",72)
+ V B,b,Integer,int,d,0,#t("derase.f90",72)
+ES

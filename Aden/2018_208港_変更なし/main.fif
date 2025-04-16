@@ -1,0 +1,75 @@
+P MAIN:main,#h("main.f90",4)
+ T bdata_info,NW_INFO_DT_bdata_info
+  C NUMOD_SHPR,numod_shpr,Integer,int,16,,0
+  C NUMG,numg,Integer,int,20,,0
+  C IT_MAR_MAX,it_mar_max,Integer,int,24,,0
+  C EPS_MAR,eps_mar,Real(Kind=2),double,0,,0
+  C NUMPORT,numport,Integer,int,28,,0
+  C IT_MAX,it_max,Integer,int,32,,0
+  C EPS,eps,Real(Kind=2),double,8,,0
+ ET
+ T port_info,NW_INFO_DT_port_info
+  C PNUM,pnum,Integer,int,72,,0
+  C COUN,coun,Integer,int,76,,0
+  C TL,tl,Real(Kind=2),double,0,,0
+  C TUL,tul,Real(Kind=2),double,8,,0
+  C TRS,trs,Real(Kind=2),double,16,,0
+  C THC_EX,thc_ex,Real(Kind=2),double,24,,0
+  C THC_IM,thc_im,Real(Kind=2),double,32,,0
+  C TEU_LOCAL,teu_local,Real(Kind=2),double,40,,0
+  C TEU_TS,teu_ts,Real(Kind=2),double,48,,0
+  C TS_MAJOR,ts_major,Integer,int,80,,0
+  C INLAND_FLAG,inland_flag,Integer,int,84,,0
+  C CAP,cap,Real(Kind=2),double,56,,0
+  C TERNUM,ternum,Real(Kind=2),double,64,,0
+ ET
+ V RESX_MAR,resx_mar,Real(Kind=2),double,,0,#t("main.f90",18)
+ V MINUG,minug,Real(Kind=2),double,,2,f(1:300,1:300),#t("main.f90",19)
+ V FREIGHT,freight,Real(Kind=2),double,,2,f(1:300,1:300),#t("main.f90",19)
+ V ODFL_MAR,odfl_mar,Real(Kind=2),double,,2,f(1:300,1:300),#t("main.f90",19)
+ V MAR_TIME,mar_time,Real(Kind=2),double,,2,f(1:300,1:300),#t("main.f90",19)
+ V X_IM_MAR,x_im_mar,Real(Kind=2),double,,1,f(1:300),#t("main.f90",20)
+ V X_EX_MAR,x_ex_mar,Real(Kind=2),double,,1,f(1:300),#t("main.f90",20)
+ V X_TRSP,x_trsp,Real(Kind=2),double,,1,f(1:300),#t("main.f90",20)
+ V FBDATA,fbdata,Character(Len=200),Char[200],,0,#t("main.f90",12)
+ V FODFL_MAR,fodfl_mar,Character(Len=200),Char[200],,0,#t("main.f90",12)
+ V FODFL_SHPR,fodfl_shpr,Character(Len=200),Char[200],,0,#t("main.f90",12)
+ V FPORT,fport,Character(Len=200),Char[200],,0,#t("main.f90",12)
+ V FLGTP,flgtp,Character(Len=200),Char[200],,0,#t("main.f90",12)
+ V FPANAMA,fpanama,Character(Len=200),Char[200],,0,#t("main.f90",12)
+ V FSUEZ,fsuez,Character(Len=200),Char[200],,0,#t("main.f90",12)
+ V FNWMG,fnwmg,Character(Len=200),Char[200],,0,#t("main.f90",12)
+ V FLDNW,fldnw,Character(Len=200),Char[200],,0,#t("main.f90",12)
+ V FCOUN,fcoun,Character(Len=200),Char[200],,0,#t("main.f90",12)
+ V BDATA,bdata,Type(bdata_info),NW_INFO_DT_bdata_info,,0,#t("main.f90",14)
+ V PORTS,ports,Type(port_info),NW_INFO_DT_port_info,,1,f(1:300),#t("main.f90",15)
+ V NUNIT,nunit,Integer,int,,0,#t("main.f90",17)
+ V IT,it,Integer,int,,0,#t("main.f90",17)
+ V PN,pn,Integer,int,,1,f(1:1000),#t("main.f90",17)
+ V A1,a1,Real(Kind=2),double,,0,#t("main.f90",18)
+ V A2,a2,Real(Kind=2),double,,0,#t("main.f90",18)
+ V VT,vt,Real(Kind=2),double,,0,#t("main.f90",18)
+EP
+S GET_DATA,GET_DATA,#h("main.f90",55)
+ T bdata_info,NW_INFO_DT_bdata_info
+  C NUMOD_SHPR,numod_shpr,Integer,int,16,,0
+  C NUMG,numg,Integer,int,20,,0
+  C IT_MAR_MAX,it_mar_max,Integer,int,24,,0
+  C EPS_MAR,eps_mar,Real(Kind=2),double,0,,0
+  C NUMPORT,numport,Integer,int,28,,0
+  C IT_MAX,it_max,Integer,int,32,,0
+  C EPS,eps,Real(Kind=2),double,8,,0
+ ET
+ V FBDATA,fbdata,Character(Len=*),Char[*],d,0,#t("main.f90",60)
+ V FODFL_MAR,fodfl_mar,Character(Len=*),Char[*],d,0,#t("main.f90",60)
+ V FODFL_SHPR,fodfl_shpr,Character(Len=*),Char[*],d,0,#t("main.f90",60)
+ V FPORT,fport,Character(Len=*),Char[*],d,0,#t("main.f90",61)
+ V FLGTP,flgtp,Character(Len=*),Char[*],d,0,#t("main.f90",61)
+ V FPANAMA,fpanama,Character(Len=*),Char[*],d,0,#t("main.f90",61)
+ V FSUEZ,fsuez,Character(Len=*),Char[*],d,0,#t("main.f90",61)
+ V FNWMG,fnwmg,Character(Len=*),Char[*],d,0,#t("main.f90",61)
+ V FLDNW,fldnw,Character(Len=*),Char[*],d,0,#t("main.f90",61)
+ V FCOUN,fcoun,Character(Len=*),Char[*],d,0,#t("main.f90",61)
+ V BDATA,bdata,Type(bdata_info),NW_INFO_DT_bdata_info,d,0,#t("main.f90",64)
+ V NUNIT,nunit,Integer,int,d,0,#t("main.f90",62)
+ES

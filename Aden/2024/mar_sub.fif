@@ -1,0 +1,122 @@
+S MAR_SUB,MAR_SUB,#h("mar_sub.f90",2)
+ T bdata_info,NW_INFO_DT_bdata_info
+  C NUMOD_SHPR,numod_shpr,Integer,int,16,,0
+  C NUMG,numg,Integer,int,20,,0
+  C IT_MAR_MAX,it_mar_max,Integer,int,24,,0
+  C EPS_MAR,eps_mar,Real(Kind=2),double,0,,0
+  C NUMPORT,numport,Integer,int,28,,0
+  C IT_MAX,it_max,Integer,int,32,,0
+  C EPS,eps,Real(Kind=2),double,8,,0
+ ET
+ T mar_node_info,NW_INFO_DT_mar_node_info
+  C ID,id,Integer,int,0,,0
+  C LNKIN,lnkin,Integer,int,4,,1,f(0:1128)
+  C LNKOUT,lnkout,Integer,int,4520,,1,f(0:1128)
+ ET
+ T mar_orgn_info,NW_INFO_DT_mar_orgn_info
+  C NORG,norg,Integer,int,0,,0
+  C NSEQ,nseq,Integer,int,4,,0
+ ET
+ T mar_dstn_info,NW_INFO_DT_mar_dstn_info
+  C NORG,norg,Integer,int,0,,0
+  C NSEQ,nseq,Integer,int,4,,0
+ ET
+ T mar_num_info,NW_INFO_DT_mar_num_info
+  C T_LINK,t_link,Integer,int,0,,0
+  C NODE,node,Integer,int,4,,0
+ ET
+ T mar_link_info,NW_INFO_DT_mar_link_info
+  C ID,id,Integer,int,80,,0
+  C G,g,Integer,int,84,,0
+  C R,r,Integer,int,88,,0
+  C P1,p1,Integer,int,92,,0
+  C P2,p2,Integer,int,96,,0
+  C PO,po,Integer,int,100,,0
+  C PD,pd,Integer,int,104,,0
+  C NODE1,node1,Integer,int,108,,0
+  C NODE2,node2,Integer,int,112,,0
+  C NODEF,nodef,Integer,int,116,,0
+  C NODET,nodet,Integer,int,120,,0
+  C TP,tp,Integer,int,124,,0
+  C TIME,__NAGf91_VAR_time,Real(Kind=2),double,0,,0
+  C PANAMA,panama,Real(Kind=2),double,8,,0
+  C SUEZ,suez,Real(Kind=2),double,16,,0
+  C COST,cost,Real(Kind=2),double,24,,0
+  C FC,fc,Real(Kind=2),double,32,,0
+  C CC,cc,Real(Kind=2),double,40,,0
+  C MC,mc,Real(Kind=2),double,48,,0
+  C CAP,cap,Real(Kind=2),double,56,,0
+  C FREQ,freq,Real(Kind=2),double,64,,0
+  C FREQWAITTIME,freqwaittime,Real(Kind=2),double,72,,0
+ ET
+ V JR,jr,Integer,int,,0,#t("mar_sub.f90",27)
+ V REQ,req,Real(Kind=2),double,d,1,f(1:1128),#t("mar_sub.f90",28)
+ V CRANE,crane,Real(Kind=2),double,d,1,f(1:1128),#t("mar_sub.f90",28)
+ V I,i,Integer,int,,0,#t("mar_sub.f90",11)
+ V J,j,Integer,int,,0,#t("mar_sub.f90",11)
+ V NUNIT,nunit,Integer,int,d,0,#t("mar_sub.f90",11)
+ V MARLMAX,marlmax,Integer,int,d,0,#t("mar_sub.f90",11)
+ V MARNMAX,marnmax,Integer,int,d,0,#t("mar_sub.f90",11)
+ V PMAX,pmax,Integer,int,d,0,#t("mar_sub.f90",11)
+ V BDATA,bdata,Type(bdata_info),NW_INFO_DT_bdata_info,d,0,#t("mar_sub.f90",12)
+ V MAR_NUM,mar_num,Type(mar_num_info),NW_INFO_DT_mar_num_info,d,0,#t("mar_sub.f90",13)
+ V MAR_LINKS,mar_links,Type(mar_link_info),NW_INFO_DT_mar_link_info,d,1,i(1:*),#t("mar_sub.f90",14)
+ V MAR_NODES,mar_nodes,Type(mar_node_info),NW_INFO_DT_mar_node_info,d,1,i(1:*),#t("mar_sub.f90",15)
+ V MAR_ORGNS,mar_orgns,Type(mar_orgn_info),NW_INFO_DT_mar_orgn_info,d,1,i(1:*),#t("mar_sub.f90",16)
+ V L,l,Integer,int,,0,#t("mar_sub.f90",11)
+ V MAR_DSTNS,mar_dstns,Type(mar_dstn_info),NW_INFO_DT_mar_dstn_info,d,1,i(1:*),#t("mar_sub.f90",17)
+ V ODFL_MAR_DIV,odfl_mar_div,Real(Kind=2),double,,2,i(1:*,1:*),#t("mar_sub.f90",19)
+ V ODFL_MAR,odfl_mar,Real(Kind=2),double,d,2,i(1:*,1:*),#t("mar_sub.f90",19)
+ V ODFLOW,odflow,Real(Kind=2),double,,2,i(1:*,1:*),#t("mar_sub.f90",19)
+ V X,x,Real(Kind=2),double,d,1,i(1:*),#t("mar_sub.f90",21)
+ V U,u,Real(Kind=2),double,,2,i(1:*,1:*),#t("mar_sub.f90",20)
+ V C,c,Real(Kind=2),double,d,1,i(1:*),#t("mar_sub.f90",22)
+ V CM,cm,Real(Kind=2),double,,2,i(1:*,1:*),#t("mar_sub.f90",20)
+ V A1,a1,Real(Kind=2),double,d,0,#t("mar_sub.f90",26)
+ V Y,y,Real(Kind=2),double,,1,i(1:*),#t("mar_sub.f90",23)
+ V A2,a2,Real(Kind=2),double,d,0,#t("mar_sub.f90",26)
+ V IT_MAR,it_mar,Integer,int,,0,#t("mar_sub.f90",25)
+ V MAR_TIME,mar_time,Real(Kind=2),double,d,2,i(1:*,1:*),#t("mar_sub.f90",20)
+ V IR,ir,Integer,int,,0,#t("mar_sub.f90",27)
+ES
+S LINKCOST_MAR,LINKCOST_MAR,#h("mar_sub.f90",113)
+ T mar_num_info,NW_INFO_DT_mar_num_info
+  C T_LINK,t_link,Integer,int,0,,0
+  C NODE,node,Integer,int,4,,0
+ ET
+ T mar_link_info,NW_INFO_DT_mar_link_info
+  C ID,id,Integer,int,80,,0
+  C G,g,Integer,int,84,,0
+  C R,r,Integer,int,88,,0
+  C P1,p1,Integer,int,92,,0
+  C P2,p2,Integer,int,96,,0
+  C PO,po,Integer,int,100,,0
+  C PD,pd,Integer,int,104,,0
+  C NODE1,node1,Integer,int,108,,0
+  C NODE2,node2,Integer,int,112,,0
+  C NODEF,nodef,Integer,int,116,,0
+  C NODET,nodet,Integer,int,120,,0
+  C TP,tp,Integer,int,124,,0
+  C TIME,__NAGf91_VAR_time,Real(Kind=2),double,0,,0
+  C PANAMA,panama,Real(Kind=2),double,8,,0
+  C SUEZ,suez,Real(Kind=2),double,16,,0
+  C COST,cost,Real(Kind=2),double,24,,0
+  C FC,fc,Real(Kind=2),double,32,,0
+  C CC,cc,Real(Kind=2),double,40,,0
+  C MC,mc,Real(Kind=2),double,48,,0
+  C CAP,cap,Real(Kind=2),double,56,,0
+  C FREQ,freq,Real(Kind=2),double,64,,0
+  C FREQWAITTIME,freqwaittime,Real(Kind=2),double,72,,0
+ ET
+ V REQ,req,Real(Kind=2),double,d,1,f(1:1128),#t("mar_sub.f90",127)
+ V CRANE,crane,Real(Kind=2),double,d,1,f(1:1128),#t("mar_sub.f90",127)
+ V F,f,Real(Kind=2),double,,1,i(1:*),#t("mar_sub.f90",123)
+ V MARLMAX,marlmax,Integer,int,d,0,#t("mar_sub.f90",118)
+ V MAR_NUM,mar_num,Type(mar_num_info),NW_INFO_DT_mar_num_info,d,0,#t("mar_sub.f90",119)
+ V MAR_LINKS,mar_links,Type(mar_link_info),NW_INFO_DT_mar_link_info,d,1,i(1:*),#t("mar_sub.f90",120)
+ V L,l,Integer,int,,0,#t("mar_sub.f90",125)
+ V X,x,Real(Kind=2),double,d,1,i(1:*),#t("mar_sub.f90",122)
+ V C,c,Real(Kind=2),double,d,1,i(1:*),#t("mar_sub.f90",123)
+ V A1,a1,Real(Kind=2),double,d,0,#t("mar_sub.f90",126)
+ V A2,a2,Real(Kind=2),double,d,0,#t("mar_sub.f90",126)
+ES

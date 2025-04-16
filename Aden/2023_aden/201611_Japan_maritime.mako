@@ -1,0 +1,7 @@
+"NW_INFO.o"
+"NW_SIZE.o"
+"derase.o"
+"main.o"
+"mar_all_not.o"
+"mar_main.o"
+"mar_sub.o"

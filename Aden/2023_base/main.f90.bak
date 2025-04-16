@@ -1,0 +1,155 @@
+
+!
+!
+      PROGRAM  MAIN
+! 
+!
+      USE NW_INFO
+      USE NW_SIZE
+
+      Implicit None
+            
+      CHARACTER*200  FBDATA, FODFL_MAR, FODFL_SHPR, FPORT, FLGTP, FPANAMA, FSUEZ, FNWMG, FLDNW, FCOUN
+!      
+      TYPE (BDATA_INFO)  BDATA
+      TYPE (PORT_INFO) PORTs(pmax)
+!
+      INTEGER*4  nunit, IT, PN(pnmax)
+      REAL*8     a1, a2, vt, resX_MAR
+      REAL*8     minUG(pmax,pmax), freight(pmax,pmax), ODFL_MAR(pmax,pmax), MAR_time(pmax,pmax)
+      REAL*8     X_IM_MAR(pmax), X_EX_MAR(pmax), X_TRSP(pmax)
+!
+      IT = 0
+!
+!      a1 = 2.308
+!      a2 = 1.017
+	  a1 = 3.1
+	  a2 = 1.5
+      vt = 0.5
+      CALL  derase2(pmax, pmax, freight)
+!
+      nunit = 15
+!
+! --- Get File Name
+      CALL  GET_DATA(nunit, FBDATA, FODFL_MAR, FODFL_SHPR, FPORT, FLGTP, FPANAMA, FSUEZ, FNWMG, FLDNW, FCOUN, BDATA) 
+!
+      open(113,file='convergence.dat',status='unknown')
+      open(112,file='SG_Cost.dat',status='unknown')
+      write (112,*) 'IT PI PJ ODflow minG numG minUG UG freight maxCMG maxG CMG'
+!  
+      open(111,file='results_mar.dat',status='unknown')
+!     
+      CALL  MAR_MAIN(nunit, FODFL_MAR, FPORT, FLGTP, FPANAMA, FSUEZ, FNWMG, BDATA, PORTs, PN, a1, a2, resX_MAR, freight, MAR_time, &
+                      vt, X_IM_MAR, X_EX_MAR, X_TRSP, ODFL_MAR, IT)
+! 
+      close(111)
+      close(113)
+      close(112)
+!      
+      STOP
+      END
+!
+!
+! 
+! ***********************************************************************
+      SUBROUTINE GET_DATA(nunit, FBDATA, FODFL_MAR, FODFL_SHPR, FPORT, FLGTP, FPANAMA, FSUEZ, FNWMG, FLDNW, FCOUN, BDATA)
+!
+      USE NW_INFO
+      Implicit None
+ 
+      CHARACTER*(*)  FBDATA, FODFL_MAR, FODFL_SHPR
+      CHARACTER*(*)  FPORT, FLGTP, FPANAMA, FSUEZ, FNWMG, FLDNW, FCOUN 
+      INTEGER*4  nunit
+!
+      TYPE (BDATA_INFO)  BDATA
+! 
+      OPEN(NUNIT,FILE='IONAME_MAR.dat',ERR=990) 
+!
+      READ(nunit,*,ERR=800)  FBDATA
+      READ(nunit,*,ERR=801)  FODFL_MAR
+      READ(nunit,*,ERR=802)  FPORT
+      READ(nunit,*,ERR=803)  FLGTP
+      READ(nunit,*,ERR=804)  FPANAMA
+      READ(nunit,*,ERR=805)  FSUEZ
+      READ(nunit,*,ERR=806)  FNWMG
+!
+      CLOSE(nunit)
+!
+! Basic Data
+!      
+      OPEN(nunit, FILE=FBDATA, STATUS='OLD')
+!
+      READ(nunit, * ,ERR=807)  BDATA%NumPORT    !港湾数
+      READ(nunit, * ,ERR=808)  BDATA%NumG       !船社グループ数
+      READ(nunit, * ,ERR=809)  BDATA%IT_MAR_MAX !海上モデルの繰り返し回数（基本は変える必要なし）
+!      READ(nunit, * ,ERR=999)  BDATA%EPS_MAR    !海上モデルの収束率（基本は変える必要なし）
+!      READ(nunit, * ,ERR=999)  BDATA%IT_MAX     !今は使ってない
+!      READ(nunit, * ,ERR=999)  BDATA%EPS        !今は使ってない
+!
+      CLOSE(nunit)              
+!    
+      RETURN
+! 
+  990 WRITE(6,*) '  File Open Error !! '
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP
+  999 WRITE(6,*) '  File READ Error !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP
+  800 WRITE(6,*) '  800 !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP
+  801 WRITE(6,*) '  801 !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP
+  802 WRITE(6,*) '  802 !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP
+  803 WRITE(6,*) '  803 !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP
+  804 WRITE(6,*) '  804 !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP
+  805 WRITE(6,*) '  805 !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP  
+  806 WRITE(6,*) '  806 !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP   
+  807 WRITE(6,*) '  807 !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP
+  808 WRITE(6,*) '  808 !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP  
+  809 WRITE(6,*) '  809 !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP
+      END   
+! 
+!  

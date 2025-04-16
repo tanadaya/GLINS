@@ -1,0 +1,910 @@
+!     
+! 
+      SUBROUTINE MAR_MAIN(nunit, FODFL_MAR, FPORT, FLGTP, FPANAMA, FSUEZ, FNWMG, BDATA, PORTs, PN, &
+                           a1, a2, resX_MAR, freight, MAR_time, vt, X_IM_MAR, X_EX_MAR, X_TRSP, ODFL_MAR, IT)
+!
+      USE NW_INFO
+      USE NW_SIZE
+      IMPLICIT NONE
+!     
+      CHARACTER*(*)  FPORT, FLGTP, FPANAMA, FSUEZ, FODFL_MAR, FNWMG
+!  
+      TYPE (BDATA_INFO)  BDATA
+      TYPE (PORT_INFO) PORTs(pmax)
+      TYPE (MAR_NUM_INFO)  MAR_Num
+      TYPE (MAR_LINK_INFO) MAR_LINKs(marlmax)
+      TYPE (MAR_NODE_INFO) MAR_NODEs(marnmax)
+      TYPE (MAR_ORGN_INFO) MAR_ORGNs(pmax)
+      TYPE (MAR_DSTN_INFO) MAR_DSTNs(pmax)
+! 
+      REAL*8     ODFL_MAR(pmax,pmax), ODFL_dummy(pmax,pmax)
+      REAL*8     X(marlmax), C(marlmax), GC(marlmax), U(pmax,pmax), CM(pmax,pmax)
+      REAL*8     UG(gmax,pmax,pmax), CMG(gmax,pmax,pmax)
+
+      REAL*8     minUG(pmax,pmax), maxCMG(pmax,pmax), freight(pmax,pmax), MAR_time(pmax,pmax), req(rmax), crane(rmax)
+      INTEGER*4  numG(pmax,pmax), minG(pmax,pmax), maxG(pmax,pmax)
+      REAL*8     nonzero_minUG, errorrate
+!      
+      INTEGER*4 L,LS,P,P1,P2,g,nunit,I,IT,IT_MAR,GG,J,PN(pnmax),NumPLink
+      REAL*8    a1,a2,vt,resX_MAR
+      REAL*8    PL(pmax,pmax), Panama(pmax,pmax), Suez(pmax,pmax)
+      INTEGER*4  II, JJ, NumI
+      INTEGER*4  POrder(rmax, jmax), NumP(rmax)
+      REAL*8    cap_G_year(rmax, gmax)
+!        
+      REAL*8     X_TRSP_SG(gmax,pmax),X_TRSP(pmax),X_IM_SG(gmax,pmax),X_IM_MAR(pmax),X_EX_SG(gmax,pmax),X_EX_MAR(pmax)
+      REAL*8     X_BERTH(pmax),X_UNLD(pmax),X_LOAD(pmax),X_SHIP(pmax,pmax),XF(marlmax) 
+      INTEGER*4  XG(marlmax) 
+!      REAL*8     X_BERTH_SG_R(rmax,gmax,pmax),X_BERTH_R(rmax,pmax)
+!      REAL*8     X_UNLD_SG_R(rmax,gmax,pmax),X_UNLD_R(rmax,pmax)
+!      REAL*8     X_LOAD_SG_R(rmax,gmax,pmax),X_LOAD_R(rmax,pmax)
+!      REAL*8     X_SHIP_R(rmax,pmax,pmax) 
+!
+      CALL  derase1(marlmax, X)
+      CALL  derase1(pmax, X_TRSP)
+      CALL  derase1(pmax, X_IM_MAR)
+      CALL  derase1(pmax, X_EX_MAR)
+      CALL  derase1(pmax, X_BERTH)
+      CALL  derase1(pmax, X_UNLD)
+      CALL  derase1(pmax, X_LOAD)
+      CALL  derase2(pmax, pmax, X_SHIP)
+      CALL  derase2(gmax, pmax, X_TRSP_SG)
+      CALL  derase2(gmax, pmax, X_IM_SG)
+      CALL  derase2(gmax, pmax, X_EX_SG)
+      CALL  derase1(marlmax, XF)
+      CALL  derase1N(marlmax, XG)       
+      CALL  derase3(gmax, pmax, pmax, UG)
+      CALL  derase3(gmax, pmax, pmax, CMG)      
+!      CALL  derase2(rmax, pmax, X_BERTH_R)           
+!      CALL  derase2(rmax, pmax, X_UNLD_R)
+!      CALL  derase2(rmax, pmax, X_LOAD_R)
+!      CALL  derase3(rmax, pmax, pmax, X_SHIP_R)
+!      CALL  derase3(rmax, gmax, pmax, X_BERTH_SG_R)           
+!      CALL  derase3(rmax, gmax, pmax, X_UNLD_SG_R)
+!      CALL  derase3(rmax, gmax, pmax, X_LOAD_SG_R)
+!      do R = 1, rmax
+!       do g = 1, gmax
+!        do p1 = 1, pmax
+!         do p2 = 1, pmax
+!           X_SHIP_SG_R(r,g,p1,p2) = 0.0
+!         end do
+!        end do
+!       end do
+!      end do
+      IT_MAR = 0
+      GG = 0
+!  
+! --- Input Data
+      WRITE( 6,'(A)')  ' Carrier Model start.'
+      CALL  INDATA_MAR(nunit, FPORT, FLGTP, FPANAMA, FSUEZ, FODFL_MAR, pmax, pnmax, BDATA, PORTs, PL, PN, &
+                        Panama, Suez, ODFL_MAR, IT)
+      WRITE( 6,'(/A)')  ' ... Data Input completed.'
+!       
+!        
+      CALL  MK_NWDATA_MAR(nunit, IT_MAR, GG, FNWMG, marlmax, marnmax, pmax, pnmax, jmax, &
+            BDATA, PL, PN, Panama, Suez, MAR_Num, MAR_LINKs, MAR_NODEs, MAR_ORGNs, MAR_DSTNs, PORTs, &
+            X, XG, C, a1, a2, NumI, NumP, POrder, cap_G_year, NumPLink, req, crane)
+      WRITE( 6,'(/A)')  ' ... Make network completed.'
+!
+! --- Data Transforming
+      CALL  TRDATA_MAR(marlmax, marnmax, pmax, BDATA, MAR_Num, MAR_LINKs, MAR_NODEs, MAR_ORGNs, MAR_DSTNs)
+      WRITE( 6, '(A)')  ' ... Data Transformation completed.'
+! 
+! --- Calculation
+      CALL  MAR_SUB(nunit, marlmax, marnmax, pmax, &
+            BDATA, MAR_Num, MAR_LINKs, MAR_NODEs, MAR_ORGNs, MAR_DSTNs, ODFL_MAR, X, C, a1, a2, MAR_time, req, crane)
+      WRITE(6,'(/A)')  ' ... Caluculation Completed.'                        
+!      
+! 
+      L = 1
+!
+! ---- Intra-Port 
+      DO g = 1, BDATA%NumG 
+        do P = 1, BDATA%NumPORT
+!              
+        X_TRSP_SG(g,P) = X(L) * 2.0
+        X_TRSP(P) = X(L) * 2.0 + X_TRSP(P)
+        L = L + 1
+!
+        X_IM_SG(g,P) = X(L)
+        X_IM_MAR(P) = X(L) + X_IM_MAR(P)
+        L = L + 1
+!
+        X_EX_SG(g,P) = X(L)
+        X_EX_MAR(P) = X(L) + X_EX_MAR(P)
+        L = L + 1
+!    
+       end do 
+      end do
+!
+! ---- Inter-Port            
+      LS = L
+      DO L = LS, MAR_Num%T_LINK 
+        P1 = MAR_LINKs(L)%P1
+        P2 = MAR_LINKs(L)%P2
+!
+	if (MAR_LINKs(L)%TP .eq. 2) then !Berthing
+          X_BERTH(P1) = X(L) + X_BERTH(P1)
+	elseif (MAR_LINKs(L)%TP .eq. 3) then !Unloading
+          X_UNLD(P1) = X(L) + X_UNLD(P1)
+	elseif (MAR_LINKs(L)%TP .eq. 4) then !Loading
+          X_LOAD(P1) = X(L) + X_LOAD(P1)
+	elseif (MAR_LINKs(L)%TP .eq. 1) then !Shipping
+          X_SHIP(P1, P2) = X(L) + X_SHIP(P1, P2)
+        end if
+!        
+      end do    
+!
+!
+      write(111,*) 'L G R PO PD NODE1 NODE2 Time Cap X Freq FreqWaitTime C Cost FC CC MC Panama Suez'
+      do L = 1, MAR_Num%T_LINK
+        write(111,*) L,MAR_LINKs(L)%G,MAR_LINKs(L)%R,MAR_LINKs(L)%PO,MAR_LINKs(L)%PD,MAR_LINKs(L)%NODE1, &
+               MAR_LINKs(L)%NODE2,MAR_LINKs(L)%Time,MAR_LINKs(L)%Cap,X(L),MAR_LINKs(L)%Freq,MAR_LINKs(L)%FreqWaitTime,C(L), &
+               MAR_LINKs(L)%Cost, MAR_LINKs(L)%FC, MAR_LINKs(L)%CC, MAR_LINKs(L)%MC, MAR_LINKs(L)%Panama, MAR_LINKs(L)%Suez
+      end do     
+!
+      resX_MAR = 0.0
+      open(nunit,file='port_output.dat',status='unknown')
+      do P = 1, BDATA%NumPORT
+       write(nunit,*) PORTs(P)%PNUM,X_EX_MAR(P),X_IM_MAR(P),X_TRSP(P),(X_TRSP_SG(g,P),g=1,BDATA%NumG),X_BERTH(P)
+       IF (PORTs(P)%TS_MAJOR .eq. 1) then
+         resX_MAR = resX_MAR + (PORTs(P)%TEU_TS / (PORTs(P)%TEU_LOCAL + PORTs(P)%TEU_TS) - &
+                        X_TRSP(P) / (X_EX_MAR(P) + X_IM_MAR(P) + X_TRSP(P))) ** 2.0
+       end if
+      end do      
+      close(nunit)
+!
+! --- Path Calculation
+!      IT_MAR = 1000
+!      CALL All_Not_SUB_MAR(nunit, marlmax, marnmax, pmax, BDATA, MAR_Num, MAR_LINKs, MAR_NODEs, MAR_ORGNs, MAR_DSTNs, &
+!           ODFLOW, C, X, U, CM, IT_MAR)            
+!
+! --- Marginal Cost and Freight Calculation           
+      IT_MAR = 10000
+      errorrate = 0.10
+      do L = 1, MAR_Num%T_LINK
+        XF(L) = X(L)
+        XG(L) = MAR_LINKs(L)%G
+      end do  
+      DO I = 1, BDATA%NumPORT
+        DO J = 1, BDATA%NumPORT
+          minUG(I, J) = 10.0 ** 10
+        end do
+      end do
+      CALL  derase2(pmax, pmax, maxCMG)
+      CALL  derase2N(pmax, pmax, numG)
+      CALL  derase2N(pmax, pmax, minG)
+      CALL  derase2N(pmax, pmax, maxG)
+!      
+      do GG = 1, BDATA%NumG
+!        write (*,*) GG
+        CALL  derase2(pmax, pmax, ODFL_dummy)
+!      
+        CALL  MK_NWDATA_MAR(nunit, IT_MAR, GG, FNWMG, marlmax, marnmax, pmax, pnmax, jmax, &
+              BDATA, PL, PN, Panama, Suez, MAR_Num, MAR_LINKs, MAR_NODEs, MAR_ORGNs, MAR_DSTNs, PORTs, &
+              XF, XG, C, a1, a2, NumI, NumP, POrder, cap_G_year, NumPLink, req, crane)
+        CALL  TRDATA_MAR(marlmax, marnmax, pmax, BDATA, MAR_Num, MAR_LINKs, MAR_NODEs, MAR_ORGNs, MAR_DSTNs)
+!
+!       write(111,*) 'L G R P1 P2 NODE1 NODE2 Time Cap Freq FreqWaitTime C Cost FC CC MC Panama Suez '
+!       do L = 1, MAR_Num%T_LINK
+!        write(111,*) L,GG,MAR_LINKs(L)%R,MAR_LINKs(L)%P1,MAR_LINKs(L)%P2,MAR_LINKs(L)%NODE1, &
+!               MAR_LINKs(L)%NODE2,MAR_LINKs(L)%Time,MAR_LINKs(L)%Cap,MAR_LINKs(L)%Freq,MAR_LINKs(L)%FreqWaitTime,C(L), &
+!               MAR_LINKs(L)%Cost, MAR_LINKs(L)%FC, MAR_LINKs(L)%CC, MAR_LINKs(L)%MC, MAR_LINKs(L)%Panama, MAR_LINKs(L)%Suez
+!       end do
+
+        DO I = 1, BDATA%NumPORT
+          DO J = 1, BDATA%NumPORT
+            if (I .ne. J) then
+              ODFL_dummy(I, J) = 1.0
+            else
+              ODFL_dummy(I, J) = 0.0
+            end if                                   
+          end do
+        end do
+!        
+        Do L = 1, MAR_Num%T_LINK
+          GC(L) = vt * C(L) + MAR_LINKs(L)%Cost ! shortest path search by shipping cost minimization, not shipping time
+        end do                         
+!        
+        CALL  All_Not_SUB_MAR(nunit, marlmax, marnmax, pmax, BDATA, MAR_Num, MAR_LINKs, MAR_NODEs, MAR_ORGNs, MAR_DSTNs, &
+             ODFL_dummy, GC, X, U, CM, IT_MAR)
+!
+        DO I = 1, BDATA%NumPORT
+          DO J = 1, BDATA%NumPORT
+            if (I .ne. J) then
+              UG(GG, I, J) = U(I, J)
+              CMG(GG, I, J) = CM(I, J)
+              if (UG(GG, I, J) .lt. minUG(I, J)) then
+                minUG(I, J) = UG(GG, I, J)
+                minG(I, J) = GG
+              end if
+            else
+              UG(GG, I, J) = 0.0
+              CMG(GG, I, J) = 0.0
+            end if                                   
+          end do
+        end do        
+!
+      end do
+!
+      DO I = 1, BDATA%NumPORT
+       DO J = 1, BDATA%NumPORT
+!
+        nonzero_minUG = (1.0 + errorrate) * minUG(I, J) 
+        do GG = 1, BDATA%NumG 
+          if (UG(GG, I, J) .lt. nonzero_minUG) then
+            numG(I, J) = numG(I, J) + 1
+            if ((CMG(GG, I, J) .lt. 10.0 ** 10) .and. (CMG(GG, I, J) .gt. maxCMG(I, J))) then
+              maxCMG(I, J) = CMG(GG, I, J)
+              maxG(I, J) = GG 
+            end if
+          end if
+        end do
+!  
+        if (IT .le. 1) then
+          freight(I, J) = maxCMG(I, J)
+        end if  
+!          
+        if (freight(I, J) .eq. 0.0) then
+          freight(I, J) = 10.0 ** 10
+        end if
+!        
+       end do
+      end do                
+!
+!      open(112,file='SG_Cost.dat',status='OLD')
+!      write (112,*) 'IT PO PD ODflow minG numG minUG UG freight maxCMG maxG CMG'
+!      if (IT .eq. BDATA%IT_MAX + 1) then
+      DO I = 1, BDATA%NumPORT
+!       J = 60
+        DO J = 1, BDATA%NumPORT
+!         if (((I .ge. 59) .and. (I .le. 64)) .or. ((I .ge. 68) .and. (I .le. 69)) .or. &
+!              ((J .ge. 59) .and. (J .le. 64)) .or. ((J .ge. 68) .and. (J .le. 69))) then
+          write (112,500) IT, PORTs(I)%PNUM, PORTs(J)%PNUM, ODFL_MAR(I, J), minG(I, J), numG(I, J), MAR_time(I, J), &
+                (UG(g, I, J), g=1, BDATA%NumG), freight(I, J), maxCMG(I, J), maxG(I, J), (CMG(g, I, J), g=1, BDATA%NumG)
+!         end if
+        end do
+      end do
+!      end if
+!      close(112)
+  500 format(3I5, F15.5, 2I3, 32F20.5, I3, 29F20.5) !一番右のFの手前の数字を船社数に、右から二番目のFの前を船社数＋3に変更する
+
+!
+!      IF (ANCHK .EQ. 1) THEN
+!          WRITE( 6,'(A/)')  '     Normal End.'
+!        ELSE
+!          WRITE( 6,'(A/)')  '     Not Converged.'
+!      END IF
+!
+!      STOP
+      END
+! 
+!
+! ***********************************************************************
+      SUBROUTINE INDATA_MAR(nunit, FPORT, FLGTP, FPANAMA, FSUEZ, FODFL_MAR, pmax, pnmax, BDATA, PORTs, &
+                             PL, PN, Panama, Suez, ODFL_MAR, IT)
+! 
+      USE NW_INFO
+      IMPLICIT NONE
+! 
+      INTEGER*4  nunit
+      CHARACTER*(*)  FPORT, FLGTP, FPANAMA, FSUEZ, FODFL_MAR
+! 
+      INTEGER*4  pmax, pnmax
+!
+      TYPE (BDATA_INFO) BDATA
+      TYPE (PORT_INFO) PORTs(pmax)
+! 
+      REAL*8     ODFL_MAR(pmax,pmax)
+! 
+!     --- 作業変数 ---
+      INTEGER*4  P, I, J, PI(pmax), PJ(pmax), g, dummy, IT, PN(pnmax)
+      REAL*8     PL(pmax, pmax), Panama(pmax, pmax), Suez(pmax, pmax)         
+!
+! Port Data 	
+!
+      OPEN(nunit, FILE=FPORT, STATUS='OLD')
+!      
+      do P = 1, BDATA%NumPORT
+        READ(nunit, *, ERR=701) PORTs(P)%PNUM,PORTs(P)%COUN,PORTs(P)%TL,PORTs(P)%TUL,PORTs(P)%TRS, &
+                 PORTs(P)%THC_Ex,PORTs(P)%THC_Im,PORTs(P)%inland_flag,PORTs(P)%CAP!,PORTs(P)%TERNUM,PORTs(P)%TEU_TS                        
+        PN(PORTs(P)%PNUM) = P 
+      end do      
+!     
+      CLOSE(nunit)
+!
+! Length Data between Ports
+!
+      OPEN(nunit, FILE=FLGTP, STATUS='OLD')
+!
+        READ(nunit, * ,ERR=702) dummy, (PJ(J), J = 1, BDATA%NumPORT) 
+!
+        do I = 1, BDATA%NumPORT 
+          READ(nunit, * ,ERR=703) PI(I), (PL(PN(PI(I)), PN(PJ(J))), J = 1, BDATA%NumPORT) 
+          write (*,*) PI(I)
+        end do
+      CLOSE(nunit)
+!
+      OPEN(nunit, FILE=FPANAMA, STATUS='OLD')
+!
+        READ(nunit, * ,ERR=704) dummy, (PJ(J), J = 1, BDATA%NumPORT) 
+!
+        do I = 1, BDATA%NumPORT
+          READ(nunit, * ,ERR=705) PI(I), (Panama(PN(PI(I)), PN(PJ(J))), J = 1, BDATA%NumPORT) 
+        end do
+      CLOSE(nunit)
+!
+      OPEN(nunit, FILE=FSUEZ, STATUS='OLD')
+!
+        READ(nunit, * ,ERR=706) dummy, (PJ(J), J = 1, BDATA%NumPORT) 
+!
+        do I = 1, BDATA%NumPORT
+          READ(nunit, * ,ERR=707) PI(I), (Suez(PN(PI(I)), PN(PJ(J))), J = 1, BDATA%NumPORT) 
+        end do
+      CLOSE(nunit)
+!
+! ODFlow Data
+!
+      IF (IT .eq. 0) then
+        call derase2(pmax, pmax, ODFL_MAR)
+        OPEN(nunit, FILE=FODFL_MAR, STATUS='OLD')
+          READ(nunit, * ,ERR=708) dummy, (PJ(J), J = 1, BDATA%NumPORT)
+            Do I = 1, BDATA%NumPORT
+              READ(nunit, * ,ERR=709) PI(I), (ODFL_MAR(PN(PI(I)), PN(PJ(J))), J = 1, BDATA%NumPORT)             
+            end do
+        CLOSE(nunit)     
+!
+      END IF
+!      
+      RETURN
+!
+  601 WRITE(6,*) '  601File READ Error !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP
+  602 WRITE(6,*) '  601File READ Error !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP    
+  701 WRITE(6,*) '  701 !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP      
+  702 WRITE(6,*) '  702 !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP      
+  703 WRITE(6,*) '703 Error: File READ Error!'
+      WRITE(6,*) PI(I),PJ(J)
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP      
+  704 WRITE(6,*) '  704 !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP      
+  705 WRITE(6,*) '  705 !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP
+  706 WRITE(6,*) '  706 !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP
+  707 WRITE(6,*) '  707 !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP
+  708 WRITE(6,*) '  708 !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP      
+  709 WRITE(6,*) '  709 !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP      
+      
+            
+      END
+! 
+! 
+! ***********************************************************************
+      SUBROUTINE MK_NWDATA_MAR(nunit, IT_MAR, GG, FNWMG, marlmax, marnmax, pmax, pnmax, jmax, &
+            BDATA, PL, PN, Panama, Suez, MAR_Num, MAR_LINKs, MAR_NODEs, MAR_ORGNs, MAR_DSTNs, PORTs, &
+            X, XG, C, a1, a2, NumI, NumP, POrder, cap_G_year, NumPLink, req, crane)
+! 
+      USE NW_INFO
+      IMPLICIT NONE
+      
+      INTEGER*4  nunit, IT_MAR, GG
+      REAL*8  a1, a2
+      CHARACTER*(*)  FNWMG
+! 
+      INTEGER*4  marlmax, marnmax, pmax, pnmax, jmax
+      TYPE (BDATA_INFO)  BDATA
+      TYPE (MAR_NUM_INFO)  MAR_Num
+      TYPE (MAR_LINK_INFO) MAR_LINKs(marlmax)
+      TYPE (MAR_NODE_INFO) MAR_NODEs(marnmax)
+      TYPE (MAR_ORGN_INFO) MAR_ORGNs(pmax)
+      TYPE (MAR_DSTN_INFO) MAR_DSTNs(pmax)
+      TYPE (PORT_INFO) PORTs(pmax)
+!
+      REAL*8  X(marlmax), C(marlmax), f(marlmax)
+      INTEGER*4  XG(marlmax)
+      INTEGER*4  I, J, II, JJ, L, LL, P, N, g, R(rmax), NumI, JS, RS, O, D, OL, PN(pnmax), NumPLink, NumP999(rmax),cnt_999(rmax,jmax),POrder999(rmax,jmax)
+      REAL*8  PL(pmax, pmax), Panama(pmax,pmax), Suez(pmax,pmax), req(rmax), v(rmax), cap(rmax), cap_G_year(rmax, gmax)
+      INTEGER*4  POrder(rmax, jmax), NumP(rmax), Bflag(rmax), k(pmax), kR(rmax), kk
+      REAL*8  FP, IR, ODR, PP, share(rmax, gmax), crane(rmax)
+      REAL*8  panama_rate, sdr_rate, scnrt, sctariff, CD_LU, mc 
+!
+      CALL  derase1(rmax, req)
+      CALL  derase1(rmax, v)
+      CALL  derase1(rmax, cap)
+      CALL  derase1n(rmax, NumP)
+      CALL  derase1n(rmax, Bflag)            
+      CALL  derase1n(pmax, k)
+      CALL  derase2(rmax, gmax, share)
+      CALL  derase2(rmax, gmax, cap_G_year)
+      CALL  derase2n(rmax, jmax, POrder) 
+      CALL  derase2n(rmax, jmax, POrder999)
+      CALL  derase2n(rmax, jmax, cnt_999)
+!
+      OPEN(nunit, FILE=FNWMG, STATUS='OLD',ERR=602)
+        READ(nunit, * ,ERR=601) NumI 
+        do I = 1, NumI
+          READ(nunit, * ,ERR=602) R(I), req(I), cap(I), v(I), (share(I, J), J = 1, BDATA%NumG), &
+                                  Nump999(I), Bflag(I), (POrder999(I, J), J = 1, NumP999(I))  
+                                  
+          JJ = 1                        
+	          do J = 1, Nump999(I)
+		          if (Porder999(I,J) .ne. 999) Then
+		          		Porder(I,JJ) = POrder999(I,J)
+		          		JJ = JJ + 1
+!		          		write(*,*)Porder(I,JJ)
+		          else
+		          		cnt_999(I,JJ) = cnt_999(I,JJ) + 1 		 		
+		          end if         
+	          end do
+	          NumP(I) = JJ-1  
+	          
+	        
+	          do J = 1, BDATA%NumG
+	            cap_G_year(I, J) = share(I, J) * req(I) * cap(I)
+	          end do
+	          crane(I) = cap(I)/2000 !2000TEUにつき１つのクレーン（連続数）             
+        
+        end do
+      CLOSE(nunit)
+!
+! Make Node & Link Data
+!  
+      N = 1
+      L = 1
+      O = 1
+      D = 1
+!
+      do P = 1, BDATA%NumPORT
+!
+       MAR_NODEs(N)%ID = P * 100 + 3 !O Node
+       MAR_ORGNs(O)%NORG = MAR_NODEs(N)%ID
+       O = O + 1
+       N = N + 1
+       MAR_NODEs(N)%ID = P * 100 + 4 !D Noden
+       MAR_DSTNs(D)%NORG = MAR_NODEs(N)%ID
+       D = D + 1
+       N = N + 1
+!
+      END DO
+!    
+! ---- Intra-Port
+      DO g = 1, BDATA%NumG
+       do P = 1, BDATA%NumPORT
+!
+        if ((GG .eq. 0) .or. (g .eq. GG)) then
+!       
+        MAR_NODEs(N)%ID = g * 100000000 + P * 100 + 1 !Unloading
+        N = N + 1
+        MAR_NODEs(N)%ID = g * 100000000 + P * 100 + 2 !Loading
+        N = N + 1
+! 
+!      Transshipment Link
+	MAR_LINKs(L)%ID = L
+	MAR_LINKs(L)%G = g
+	MAR_LINKs(L)%R = 0
+	MAR_LINKs(L)%PO = PORTs(P)%PNUM
+	MAR_LINKs(L)%P1 = P
+	MAR_LINKs(L)%NODE1 = g * 100000000 + MAR_LINKs(L)%P1 * 100 + 1
+	MAR_LINKs(L)%NODE2 = g * 100000000 + MAR_LINKs(L)%P1 * 100 + 2
+	MAR_LINKs(L)%Time = PORTs(P)%TRS
+	MAR_LINKs(L)%Cost = 0.75 * (PORTs(P)%THC_Ex + PORTs(P)%THC_Im)
+	MAR_LINKs(L)%Cap = 0
+	MAR_LINKs(L)%TP = 0
+        MAR_LINKs(L)%FreqWaitTime = 0.0
+        MAR_LINKs(L)%FC = 0.0
+        MAR_LINKs(L)%CC = 0.0
+        MAR_LINKs(L)%MC = 0.0
+        MAR_LINKs(L)%Panama = 0.0
+        MAR_LINKs(L)%Suez = 0.0
+        C(L) = MAR_LINKs(L)%Time
+	L = L + 1
+!
+!      Import Link
+	MAR_LINKs(L)%ID = L
+	MAR_LINKs(L)%G = g
+	MAR_LINKs(L)%R = 0
+	MAR_LINKs(L)%PO = PORTs(P)%PNUM
+	MAR_LINKs(L)%P1 = P
+	MAR_LINKs(L)%NODE1 = g * 100000000 + MAR_LINKs(L)%P1 * 100 + 1
+	MAR_LINKs(L)%NODE2 = MAR_LINKs(L)%P1 * 100 + 4
+	MAR_LINKs(L)%Time = 0.01
+	MAR_LINKs(L)%Cost = PORTs(P)%THC_Im
+	MAR_LINKs(L)%Cap = 0
+	MAR_LINKs(L)%TP = 0
+        MAR_LINKs(L)%FreqWaitTime = 0.0
+        MAR_LINKs(L)%FC = 0.0
+        MAR_LINKs(L)%CC = 0.0
+        MAR_LINKs(L)%MC = 0.0
+        MAR_LINKs(L)%Panama = 0.0
+        MAR_LINKs(L)%Suez = 0.0
+        C(L) = MAR_LINKs(L)%Time
+	L = L + 1	
+!	
+!      Export Link
+	MAR_LINKs(L)%ID = L
+	MAR_LINKs(L)%G = g
+	MAR_LINKs(L)%R = 0
+	MAR_LINKs(L)%PO = PORTs(P)%PNUM
+	MAR_LINKs(L)%P1 = P
+	MAR_LINKs(L)%NODE1 = MAR_LINKs(L)%P1 * 100 + 3
+	MAR_LINKs(L)%NODE2 = g * 100000000 + MAR_LINKs(L)%P1 * 100 + 2
+	MAR_LINKs(L)%Time = 0.01
+	MAR_LINKs(L)%Cost = PORTs(P)%THC_Ex
+	MAR_LINKs(L)%Cap = 0
+	MAR_LINKs(L)%TP = 0
+        MAR_LINKs(L)%FreqWaitTime = 0.0
+        MAR_LINKs(L)%FC = 0.0
+        MAR_LINKs(L)%CC = 0.0
+        MAR_LINKs(L)%MC = 0.0
+        MAR_LINKs(L)%Panama = 0.0
+        MAR_LINKs(L)%Suez = 0.0
+        C(L) = MAR_LINKs(L)%Time
+	L = L + 1		
+!
+        end if
+!
+       end do
+      end do
+      
+      if (GG .eq. 0) then
+        NumPLink = L      
+      end if
+!
+! ---- Inter-Port                       
+!
+      FP = 587.0 ! Fuel Price ($/ton)
+      IR = 0.02 ! Interest Rate
+      ODR = 0.9 ! Operation Day Rate
+      PP = 15.0 ! Payment Period
+      panama_rate = 72.0 !US$/TEU
+      sdr_rate = 1.5
+      CD_LU = 8.0 ! Channel Depth of La Union 
+
+!
+      DO g = 1, BDATA%NumG
+!
+      if ((GG .eq. 0) .or. (g .eq. GG)) then 
+!
+       JS = 0
+       J = 0
+       call derase1n(pmax, k)
+       
+       if (GG .ne. 0) then
+        do OL = NumPLink, marlmax
+         if (XG(OL) .eq. g) then ! adjusting link No. L for calculated flow X in the calculation by shipping company
+!           write (*,*) g, OL
+           goto 99
+         end if  
+        end do
+       else
+        OL = L
+       end if         
+!       write (*,*) g, OL
+!
+    99  do I = 1, NumI    
+        if (cap_G_year(I, g) .gt. 0.0) then
+!		 if (R(I) .ne. R(I-1)) then !single route                 
+          RS = I
+          call derase1n(pmax, k)
+          JS = 1
+ 
+         do J = JS, NumP(I) - 1
+           P = PN(POrder(I, J))
+           k(P) = k(P) + 1          
+           if (R(I) .le. 999) then
+             MAR_NODEs(N)%ID = g * 100000000 + R(I) * 100000 + P * 100 + k(P) * 10 + 1
+             N = N + 1
+             MAR_NODEs(N)%ID = g * 100000000 + R(I) * 100000 + P * 100 + k(P) * 10 + 2
+             N = N + 1          
+           else
+             MAR_NODEs(N)%ID = g * 100000000 + (R(I)-1000) * 100000 + 50000 + P * 100 + k(P) * 10 + 1
+             N = N + 1
+             MAR_NODEs(N)%ID = g * 100000000 + (R(I)-1000) * 100000 + 50000 + P * 100 + k(P) * 10 + 2
+             N = N + 1
+           end if  
+!
+!      Berthing Link
+	    MAR_LINKs(L)%ID = L
+	    MAR_LINKs(L)%G = g
+	    MAR_LINKs(L)%R = R(I)
+	    MAR_LINKs(L)%PO = POrder(I, J)
+	    MAR_LINKs(L)%P1 = PN(MAR_LINKs(L)%PO)
+	    MAR_LINKs(L)%NODE1 = MAR_NODEs(N-2)%ID
+	    MAR_LINKs(L)%NODE2 = MAR_NODEs(N-1)%ID
+!	    MAR_LINKs(L)%Time = 12.0
+	    MAR_LINKs(L)%Time = X(OL+1)/(45.0 * req(I) * crane(I)) + X(OL+2)/(45.0 * req(I) * crane(I)) + 2.0
+	    MAR_LINKs(L)%Cost = 0.01
+	    MAR_LINKs(L)%Cap = cap_G_year(I, g) / req(I)
+	    MAR_LINKs(L)%TP = 2
+        MAR_LINKs(L)%Freq = req(I)
+        MAR_LINKs(L)%FreqWaitTime = 0.0
+        MAR_LINKs(L)%FC = 0.0
+        MAR_LINKs(L)%CC = 0.0
+        MAR_LINKs(L)%MC = 0.0
+        MAR_LINKs(L)%Panama = 0.0
+        MAR_LINKs(L)%Suez = 0.0
+        C(L) = MAR_LINKs(L)%Time
+	    L = L + 1          
+        OL = OL + 1
+!
+!      Unloading Link
+		MAR_LINKs(L)%ID = L
+		MAR_LINKs(L)%G = g
+		MAR_LINKs(L)%R = R(I)
+		MAR_LINKs(L)%PO = POrder(I, J)
+		MAR_LINKs(L)%P1 = PN(MAR_LINKs(L)%PO)
+		MAR_LINKs(L)%NODE1 = MAR_NODEs(N-2)%ID
+		MAR_LINKs(L)%NODE2 = g * 100000000 + MAR_LINKs(L)%P1 * 100 + 1
+!	  
+	    MAR_LINKs(L)%Time = X(OL) / (45.0 * req(I) * crane(I)) + 1.0
+		MAR_LINKs(L)%Cap = cap_G_year(I, g) / req(I)
+		MAR_LINKs(L)%TP = 3
+		MAR_LINKs(L)%Freq = req(I)
+        MAR_LINKs(L)%FreqWaitTime = MAR_LINKs(L)%Time
+        MAR_LINKs(L)%FC = 0.0
+        MAR_LINKs(L)%CC = 0.0
+        MAR_LINKs(L)%MC = 0.0
+        MAR_LINKs(L)%Panama = 0.0
+        MAR_LINKs(L)%Suez = 0.0
+        C(L) = MAR_LINKs(L)%Time
+		L = L + 1
+		OL = OL + 1
+!
+!      Loading Link
+		MAR_LINKs(L)%ID = L
+		MAR_LINKs(L)%G = g
+		MAR_LINKs(L)%R = R(I)
+		MAR_LINKs(L)%PO = POrder(I, J)
+		MAR_LINKs(L)%P1 = PN(MAR_LINKs(L)%PO)
+    	MAR_LINKs(L)%NODE1 = g * 100000000 + MAR_LINKs(L)%P1 * 100 + 2
+		MAR_LINKs(L)%NODE2 = MAR_NODEs(N-1)%ID
+	    MAR_LINKs(L)%Time = 7.0 * 24.0 / (req(I) / 52.0) / 2.0 + X(OL)/(45.0 * req(I) * crane(I)) + 1.0
+!
+!        if (MAR_LINKs(L)%R .eq. 879) then ! Punom Penh Feeder
+!          MAR_LINKs(L)%Time = 7.0 * 24.0 / 2.0
+!        end if 
+!	
+		MAR_LINKs(L)%Cost = 0.01
+		MAR_LINKs(L)%Cap = cap_G_year(I, g) / req(I)
+		MAR_LINKs(L)%TP = 4
+		MAR_LINKs(L)%Freq = req(I)
+        MAR_LINKs(L)%FreqWaitTime = MAR_LINKs(L)%Time
+        MAR_LINKs(L)%FC = 0.0
+        MAR_LINKs(L)%CC = 0.0
+        MAR_LINKs(L)%MC = 0.0
+        MAR_LINKs(L)%Panama = 0.0
+        MAR_LINKs(L)%Suez = 0.0
+        C(L) = MAR_LINKs(L)%Time
+		L = L + 1
+		OL = OL + 1
+!
+!      Shipping Link
+		MAR_LINKs(L)%ID = L
+		MAR_LINKs(L)%G = g
+		MAR_LINKs(L)%R = R(I)
+		MAR_LINKs(L)%PO = POrder(I, J)
+		MAR_LINKs(L)%PD = POrder(I, J + 1)
+		MAR_LINKs(L)%P1 = PN(MAR_LINKs(L)%PO)
+		MAR_LINKs(L)%P2 = PN(MAR_LINKs(L)%PD)
+		MAR_LINKs(L)%NODE1 = MAR_NODEs(N-1)%ID
+        if (R(I) .le. 999) then
+	      if (j .lt. NumP(I) - 1) then
+		    MAR_LINKs(L)%NODE2 = g * 100000000 + R(I) * 100000 + MAR_LINKs(L)%P2 * 100 + (k(MAR_LINKs(L)%P2) + 1) * 10 + 1 
+  	      else 
+	        MAR_LINKs(L)%NODE2 = g * 100000000 + R(I) * 100000 + MAR_LINKs(L)%P2 * 100 + 10 + 1
+	      end if
+	    else
+	      if (j .lt. NumP(I) - 1) then
+	        MAR_LINKs(L)%NODE2 = g * 100000000 + (R(I)-1000) * 100000 + 50000 + MAR_LINKs(L)%P2 * 100 + (k(MAR_LINKs(L)%P2) + 1) * 10 + 1 
+  	      else 
+	        MAR_LINKs(L)%NODE2 = g * 100000000 + (R(I)-1000) * 100000 + 50000 + MAR_LINKs(L)%P2 * 100 + 10 + 1
+	      end if  
+	    end if
+        MAR_LINKs(L)%Time = PL(MAR_LINKs(L)%P1, MAR_LINKs(L)%P2) / v(I) + 12.0 * cnt_999(I,J) &
+              + (Panama(MAR_LINKs(L)%P1, MAR_LINKs(L)%P2) + Suez(MAR_LINKs(L)%P1, MAR_LINKs(L)%P2)) * 24.0      
+	 	MAR_LINKs(L)%Cap = cap_G_year(I, g) / req(I)
+!
+        MAR_LINKs(L)%Panama = Panama(MAR_LINKs(L)%P1, MAR_LINKs(L)%P2) * panama_rate ! per TEU
+        scnrt = cap(I) * 10.92 - 1137.0
+		if (scnrt .le. 5000.0) then
+		  sctariff = sdr_rate * 7.65 * scnrt
+		elseif (scnrt .le. 10000.0) then
+		  sctariff = sdr_rate * (5.0 * scnrt + 38250.0)
+		elseif (scnrt .le. 20000.0) then
+		  sctariff = sdr_rate * (4.0 * scnrt + 63250.0)
+		elseif (scnrt .le. 40000.0) then
+		  sctariff = sdr_rate * (2.8 * scnrt + 103250.0)
+		elseif (scnrt .le. 70000.0) then
+		  sctariff = sdr_rate * (2.6 * scnrt + 159250.0)
+		elseif (scnrt .le. 120000.0) then
+		  sctariff = sdr_rate * (2.05 * scnrt + 237250.0)
+		else
+		  sctariff = sdr_rate * (1.95 * scnrt + 339750.0)	    
+		end if  
+        MAR_LINKs(L)%Suez = Suez(MAR_LINKs(L)%P1, MAR_LINKs(L)%P2) * sctariff * share(I, g) ! per vessel	  	
+!
+		MAR_LINKs(L)%TP = 1
+		MAR_LINKs(L)%Freq = req(I)
+        MAR_LINKs(L)%FC = FP * 6.49 * (cap(I) * 11.89 + 4414.0)**(2.0/3.0) * v(I) **3.0 / 10.0**6.0 * share(I, g) &
+               * (MAR_LINKs(L)%Time/24.0)
+        MAR_LINKs(L)%CC = (0.0099 * cap(I) + 8.0) * 1000000.0 * share(I, g) * IR /(1-(1+IR)**(-PP))/(365 * ODR) &
+               * (MAR_LINKs(L)%Time/24.0)
+        MAR_LINKs(L)%MC = (cap(I) * 0.7915 + 4276.0) * share(I, g) * (MAR_LINKs(L)%Time/24.0) 
+        if (X(OL) .gt. 0.0) then
+            MAR_LINKs(L)%Cost = (MAR_LINKs(L)%FC + MAR_LINKs(L)%CC + MAR_LINKs(L)%MC + MAR_LINKs(L)%Suez) &
+               / (X(OL) / MAR_LINKs(L)%Freq) + MAR_LINKs(L)%Panama
+        else
+          MAR_LINKs(L)%Cost = 10.0 ** 10
+        end if
+        if (MAR_LINKs(L)%Cost .gt. 10.0 ** 10) then
+          MAR_LINKs(L)%Cost = 10.0 ** 10
+        end if
+!
+        MAR_LINKs(L)%FreqWaitTime = MAR_LINKs(L-1)%Time
+        f(L) = X(OL) / (MAR_LINKs(L)%Cap * MAR_LINKs(L)%Freq)
+        C(L) = MAR_LINKs(L)%Time + MAR_LINKs(L)%FreqWaitTime * a1 * f(L) ** a2
+!        C(L) = MAR_LINKs(L)%Time + MAR_LINKs(L)%Time * a1 * f(L) ** a2
+	L = L + 1	
+	OL = OL + 1
+!
+         end do
+        end if
+!       
+       end do
+!
+      end if
+      end do
+!      
+      MAR_Num%NODE = N - 1
+      MAR_Num%T_LINK = L - 1     
+!      
+!      open(16,file='NwLinkCheck_Carr.dat',status='unknown')
+!      do L = 1, MAR_Num%T_LINK	
+!        write(16,*) MAR_LINKs(L)%ID, MAR_LINKs(L)%P1, MAR_LINKs(L)%P2, &
+!                    MAR_LINKs(L)%NODE1, MAR_LINKs(L)%NODE2, MAR_LINKs(L)%Time, MAR_LINKs(L)%Cost      
+!      end do      
+!      close(16)
+!
+      RETURN
+!
+  601 WRITE(6,*) '  601File READ Error !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP
+  602 WRITE(6,*) '  601File READ Error !!'
+      WRITE(6,*) ' '
+      WRITE(6,*) '  >> Press Enter key to Quit Program.'
+      PAUSE
+      STOP
+!       
+      END
+! 
+!************************************************************************
+      SUBROUTINE TRDATA_MAR(marlmax, marnmax, pmax, BDATA, MAR_Num, MAR_LINKs, MAR_NODEs, MAR_ORGNs, MAR_DSTNs)
+!
+      USE NW_INFO
+      IMPLICIT NONE
+! 
+      INTEGER*4  marlmax, marnmax, pmax 
+      TYPE (BDATA_INFO)  BDATA
+      TYPE (MAR_NUM_INFO)  MAR_Num
+      TYPE (MAR_LINK_INFO) MAR_LINKs(marlmax)
+      TYPE (MAR_NODE_INFO) MAR_NODEs(marnmax)
+      TYPE (MAR_ORGN_INFO) MAR_ORGNs(pmax)
+      TYPE (MAR_DSTN_INFO) MAR_DSTNs(pmax)
+! 
+      INTEGER*4  L, I, II, MI, IO, MO, NN
+! 
+! --- 各リンクの始・終点のノード連番をセット
+      NN = MAR_Num%NODE
+      DO 40  L = 1, MAR_Num%T_LINK
+        CALL  CNVO2S_MAR(marnmax, NN, MAR_NODEs, MAR_LINKs(L)%NODE1, MAR_LINKs(L)%NODEF)
+        CALL  CNVO2S_MAR(marnmax, NN, MAR_NODEs, MAR_LINKs(L)%NODE2, MAR_LINKs(L)%NODET)
+   40 CONTINUE
+! 
+! --- ＯＤノードのノード連番をセット
+      DO 70  I = 1, BDATA%NumPORT
+        CALL  CNVO2S_MAR(marnmax, NN, MAR_NODEs, MAR_ORGNs(I)%NORG, MAR_ORGNs(I)%NSEQ)
+   70 CONTINUE
+      DO 80  I = 1, BDATA%NumPORT
+        CALL  CNVO2S_MAR(marnmax, NN, MAR_NODEs, MAR_DSTNs(I)%NORG, MAR_DSTNs(I)%NSEQ)
+   80 CONTINUE
+! 
+! --- 各ノードの流入／流出リンク本数等を初期化
+      DO 85  I = 1, MAR_Num%NODE
+        DO  L = 0, rmax
+          MAR_NODEs(I)%LNKIN(L)  = 0
+        END DO
+        DO  L = 0, rmax
+          MAR_NODEs(I)%LNKOUT(L) = 0
+        END DO
+   85 CONTINUE
+!   
+! --- 各ノードの流入／流出リンクの番号（リンク連番）を記憶
+      DO 90  L = 1, MAR_Num%T_LINK
+!       * 流入リンク
+        II = MAR_LINKs(L)%NODET
+        MAR_NODEs(II)%LNKIN(0)  = MAR_NODEs(II)%LNKIN(0) + 1
+        MI = MAR_NODEs(II)%LNKIN(0)
+        MAR_NODEs(II)%LNKIN(MI) = L
+!       * 流出リンク
+        IO = MAR_LINKs(L)%NODEF
+        MAR_NODEs(IO)%LNKOUT(0) = MAR_NODEs(IO)%LNKOUT(0) + 1
+        MO = MAR_NODEs(IO)%LNKOUT(0)
+        MAR_NODEs(IO)%LNKOUT(MO)= L
+   90 CONTINUE
+! 
+      RETURN
+      END
+! 
+! 
+! **************************************************************
+      SUBROUTINE CNVO2S_MAR(marnmax, NNODE, MAR_NODEs, NO, NF)
+! 
+      USE NW_INFO
+      IMPLICIT NONE
+! 
+      INTEGER*4  marnmax, NNODE
+      TYPE (MAR_NODE_INFO) MAR_NODEs(marnmax)
+! 
+      INTEGER*4  NO
+      INTEGER*4  NF
+! 
+      INTEGER*4  i
+! 
+      DO 10  i = 1, NNODE
+        IF (MAR_NODEs(i)%ID .EQ. NO) THEN
+            NF = i
+            RETURN
+        END IF
+   10 CONTINUE
+! 
+!     該当番号がない場合
+      NF = 0
+      WRITE(6,*) ' ERROR in CNVO2S !! （該当番号なし）'
+      WRITE(6,*) ' ..... Node ID =', NO
+!
+      RETURN
+      END
+! 
+! 
